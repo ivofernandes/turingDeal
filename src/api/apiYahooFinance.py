@@ -3,9 +3,6 @@ import pandas_datareader
 
 from src.aux import indicators
 
-cacheFolder = '/Users/ivofernandes/Documents/projects/py-stocks/cache/'
-intervals = [3, 5, 8, 10, 12, 15, 30]
-
 # Download daily data for ticker since a specific date
 def downloadDailyData(ticker, startDate):
 
@@ -33,7 +30,7 @@ def downloadDailyData(ticker, startDate):
 
     return df
 
-def calculateIndicators(df):
+def calculateIndicators(df, intervals):
     df['Volume_close'] = df['Close'] * df['Volume']
 
     # Volume based indicators
@@ -58,11 +55,11 @@ def calculateIndicators(df):
                     df[ema1_title + '_' + ema2_title] = round(df[ema1_title] / df[ema2_title] - 1, 5)
 
 # Get the dataframe from yahoo finance
-def getDailyData(ticker,startDate, startDay):
+def getDailyData(ticker,startDate, startDay, intervals):
     # Get daily data
     df = downloadDailyData(ticker, startDate)
 
-    calculateIndicators(df)
+    calculateIndicators(df, intervals)
 
     df = df.dropna()
 

@@ -1,3 +1,5 @@
+# File to manage algoritms for tecnhical indicators
+
 def RSI(data, time_window):
     diff = data.diff(1).dropna()  # diff in one field(one day)
 
