@@ -43,7 +43,8 @@ def buyAndHoldLog(buyAndHold):
 
     metrics = 'CAGR: ' + str(round(buyAndHold['CAGR'],3)) + ', MAR: ' + str(round(buyAndHold['MAR'],3))
 
-    log = 'Buy and hold since ' +  str(buyAndHold['startDate']) + '. Rentability : ' + str(round(buyAndHold['rentability'], 2)) + '%' \
+    log = 'Buy and hold since ' + str(buyAndHold['startDate']) + ' until ' + str(buyAndHold['endDate']) \
+          +':\n\tRentability: ' + str(round(buyAndHold['rentability'], 2)) + '%' \
           + ' | drawdown: ' + str(round(buyAndHold['drawdown'], 2)) + '%  | ' + metrics
 
     return log

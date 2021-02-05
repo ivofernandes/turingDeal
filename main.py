@@ -21,3 +21,4 @@ def routine():
 
     print(strategyBuyAndHold.buyAndHoldLog(buyAndHold))
 
+routine()
