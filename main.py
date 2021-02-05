@@ -1,14 +1,23 @@
-from src.api import apiFinancialModelPrep
-from src.api import apiYahooFinance
+import datetime
 
+from src.api import apiYahooFinance
 from src.aux.strategy import strategyBuyAndHold
 
-incomeDataframe = apiFinancialModelPrep.getIncomeStatement('AAPL')
+def routine():
 
-intervals = [3, 5, 8, 10, 12, 15, 30]
-priceDataFrame = apiYahooFinance.getDailyData('AAPL', None, 30, intervals)
-buyAndHold = strategyBuyAndHold.buyAndHoldAnalysis(priceDataFrame)
-print(strategyBuyAndHold.buyAndHoldLog(buyAndHold))
-priceDataFrame['Close'].plot()
+    # Strategy start date
+    startyear = 1920
+    startmonth = 1
+    startday = 1
+    startDate = datetime.datetime(startyear, startmonth, startday)
+    intervals = [3, 5, 8, 10, 12, 15, 30]
 
-print(incomeDataframe)
+    # Get daily data from yahoo finance
+    priceDataFrame = apiYahooFinance.getDailyData('^GSPC', startDate, None, intervals, False)
+
+    # Analyse buy and hold results
+    buyAndHold = strategyBuyAndHold.buyAndHoldAnalysis(priceDataFrame)
+    priceDataFrame['Close'].plot()
+
+    print(strategyBuyAndHold.buyAndHoldLog(buyAndHold))
+

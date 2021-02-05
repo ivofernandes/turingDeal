@@ -1,4 +1,4 @@
-import datetime as dt
+import datetime
 import pandas_datareader
 
 from src.aux import indicators
@@ -11,8 +11,8 @@ def downloadDailyData(ticker, startDate):
         startyear = 1928
         startmonth = 1
         startday = 1
-        startDate = dt.datetime(startyear, startmonth, startday)
-    now = dt.datetime.now()
+        startDate = datetime.datetime(startyear, startmonth, startday)
+    now = datetime.datetime.now()
 
     # Get data from yahoo finance
     df = pandas_datareader.get_data_yahoo(ticker, startDate, now)
@@ -55,17 +55,19 @@ def calculateIndicators(df, intervals):
                     df[ema1_title + '_' + ema2_title] = round(df[ema1_title] / df[ema2_title] - 1, 5)
 
 # Get the dataframe from yahoo finance
-def getDailyData(ticker,startDate, startDay, intervals):
+def getDailyData(ticker,startDate, startDay, intervals,calculateIndicatorsFlag):
     # Get daily data
     df = downloadDailyData(ticker, startDate)
 
-    calculateIndicators(df, intervals)
+    if calculateIndicatorsFlag:
+        calculateIndicators(df, intervals)
 
     df = df.dropna()
 
-    # Price changes since the day in the dataframe
-    for period in [1, 7, 30]:
-        df['future_var_' + str(period)] = (df['Close'].pct_change(periods=-period) * -1) * 100
+    if calculateIndicatorsFlag:
+        # Price changes since the day in the dataframe
+        for period in [1, 7, 30]:
+            df['future_var_' + str(period)] = (df['Close'].pct_change(periods=-period) * -1) * 100
 
     return df
 
