@@ -1,5 +1,6 @@
 import datetime
 import pandas_datareader
+from pandas_datareader._utils import RemoteDataError
 
 from src.aux import indicators
 
@@ -15,7 +16,11 @@ def downloadDailyData(ticker, startDate):
     now = datetime.datetime.now()
 
     # Get data from yahoo finance
-    df = pandas_datareader.get_data_yahoo(ticker, startDate, now)
+    try:
+        df = pandas_datareader.get_data_yahoo(ticker, startDate, now)
+    except RemoteDataError as e:
+        print(e)
+        exit()
 
     # Drop any duplicated values for the same date
     df = df.reset_index().drop_duplicates(subset='Date').set_index('Date')
