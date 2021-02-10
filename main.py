@@ -1,4 +1,7 @@
 import datetime
+import json
+from pathlib import Path
+
 from src.api import apiFinancialModelPrep
 from src.api import apiYahooFinance
 from src.aux.strategy import strategyBuyAndHold

@@ -9,12 +9,16 @@
 ####################################################################################
 
 import math
-import urllib.request, json, pandas
+import os
+import urllib.request, json, pandas, numpy
+from pathlib import Path
 
 import numpy
 
+from src.aux.utils import config
+
 financialModelUrl = 'https://financialmodelingprep.com/api/v3/'
-apiKey = 'demo'
+apiKey = config.getConfig('FINANCIAL_MODEL_PREP_API_KEY','demo')
 
 # Get a basic income statement dataframe
 def getBasicDataframe(ticker, endpoint):
@@ -31,17 +35,18 @@ def getBasicDataframe(ticker, endpoint):
         return dataframe
 
 # Get income statement with some calculated data
-def cleanIncomeStatement(dataframe):
+def cleanQuarterData(dataframe, key):
     # Drop rows after lose notion of the filling index and put filling date as index
-    dataframe['fillingDate'] = dataframe['fillingDate'].apply(lambda x: x.replace(' 00:00:00', '').strip())
+    dataframe = dataframe.dropna()
+    dataframe[key] = dataframe[key].apply(lambda x: x.replace(' 00:00:00', '').strip())
     validFillingDate = True
     for i in dataframe.index[::-1]:
-        if dataframe['fillingDate'][i] == '0':
+        if dataframe[key][i] == '0':
             validFillingDate = False
         if not validFillingDate:
             dataframe.drop(i, inplace=True)
-    dataframe['fillingDate'] = pandas.to_datetime(dataframe['fillingDate'], format='%Y-%m-%d')
-    dataframe = dataframe.set_index('fillingDate')
+    dataframe[key] = pandas.to_datetime(dataframe[key], format='%Y-%m-%d')
+    dataframe = dataframe.set_index(key)
 
     dataframe['absolute_quarter'] = dataframe.index.year * 4 + dataframe.index.quarter
 
@@ -78,6 +83,11 @@ def cleanIncomeStatement(dataframe):
 def getIncomeStatement(ticker):
     dataframe = getBasicDataframe(ticker, 'income-statement')
 
+    # ratios for revenue spending
+    dataframe['R&D_revenue'] = dataframe['researchAndDevelopmentExpenses'] / dataframe['revenue']
+    dataframe['admin_revenue'] = dataframe['generalAndAdministrativeExpenses'] / dataframe['revenue']
+    dataframe['sales_revenue'] = dataframe['sellingAndMarketingExpenses'] / dataframe['revenue']
+
     # Caculate revenue year over year, and it's last 4 quarters moving avering
     dataframe['revenue_yoy'] = (dataframe['revenue'].pct_change(periods=4)) * 100
     dataframe['revenue_yoy_avg4'] = dataframe['revenue_yoy'].rolling(window=4).mean()
@@ -86,45 +96,82 @@ def getIncomeStatement(ticker):
     dataframe['netMargin_yoy'] = (dataframe['netIncomeRatio'].pct_change(periods=4)) * 100
     dataframe['netMargin_yoy_avg4'] = dataframe['netMargin_yoy'].rolling(window=4).mean()
 
-    dataframe = cleanIncomeStatement(dataframe)
+    dataframe = cleanQuarterData(dataframe, 'fillingDate')
 
     return dataframe
 
 # Get balance sheet and calculate useful metrics
 def getBalanceSheet(ticker):
-    balanceSheet = getBasicDataframe(ticker, 'balance-sheet-statement')
+    dataframe = getBasicDataframe(ticker, 'balance-sheet-statement')
 
-    balanceSheet = cleanIncomeStatement(balanceSheet)
+    dataframe['equity_yoy'] = (dataframe['totalStockholdersEquity'].pct_change(periods=4)) * 100
 
-    return balanceSheet
+    dataframe = cleanQuarterData(dataframe, 'fillingDate')
+
+    return dataframe
+
+
+# Get cash flow statement
+def getCashFlowStatement(ticker):
+    dataframe = getBasicDataframe(ticker, 'cash-flow-statement')
+
+    dataframe = cleanQuarterData(dataframe, 'fillingDate')
+
+    return dataframe
+
+# Get balance sheet and calculate useful metrics
+def getKeyMetrics(ticker):
+    dataframe = getBasicDataframe(ticker, 'key-metrics')
+
+    return dataframe
 
 # join multiple dataframes in one unified dataframe
-def joinQuarterDataframes(firstDataframe, secondDataframe):
-    # Validate if the number of rows match
-    valid = True
-    if len(firstDataframe[firstDataframe.columns[0]]) != len(secondDataframe[secondDataframe.columns[0]]):
-        valid = False
-    # Validate if the quarters range is the same
-    else:
-        rows = len(firstDataframe[firstDataframe.columns[0]])
-        for date in range(0, rows):
-            if firstDataframe['absolute_quarter'][date] != secondDataframe['absolute_quarter'][date]:
-                valid = False
-                break
+def joinQuarterDataframes(firstDataframe, secondDataframe, keyToJoin):
 
-    if valid:
-        # Add empty columns for the fundamentals
-        ignoreColumns = ['date', 'period', 'reportedCurrency', 'symbol', 'acceptedDate','link', 'finalLink']
+    # Add columns
+    ignoreColumns = ['date', 'period', 'reportedCurrency', 'symbol', 'acceptedDate','link', 'finalLink']
+    for column in secondDataframe.columns:
+        if column not in ignoreColumns:
+            # Add an empty column
+            firstDataframe[column] = pandas.Series(numpy.zeros(len(firstDataframe)), index=firstDataframe.index)
+            firstDataframe[column] = math.nan
+
+            # Add data to the new columns
+    for date in firstDataframe.index:
+        # Find the right row in the second dataframe
+        row = None
+        if keyToJoin is None:
+            row = secondDataframe[secondDataframe.index == date]
+        else:
+            row = secondDataframe[secondDataframe[keyToJoin] == str(firstDataframe[keyToJoin][date])]
+
+        # Join each column
         for column in secondDataframe.columns:
             if column not in ignoreColumns:
-                firstDataframe[column] = secondDataframe[column]
+                if pandas.api.types.is_numeric_dtype(row[column]):
+                    try:
+                        firstDataframe[column][date] = row[column]
+                    except:
+                        pass # Best effort
+
+    return firstDataframe
+
+
+
 
 def getFundamentals(ticker):
     incomeStatement = getIncomeStatement(ticker)
 
-    balanceSheet = getBalanceSheet(ticker)
-
     # join balance sheet with income statement
-    joinQuarterDataframes(incomeStatement, balanceSheet)
+    balanceSheet = getBalanceSheet(ticker)
+    finalDataframe = joinQuarterDataframes(incomeStatement, balanceSheet, None)
 
-    return incomeStatement
+    # Join cash flow
+    cashflow = getCashFlowStatement(ticker)
+    finalDataframe = joinQuarterDataframes(finalDataframe, cashflow, None)
+
+    # Join key metrics
+    keyMetrics = getKeyMetrics(ticker)
+    finalDataframe = joinQuarterDataframes(finalDataframe, keyMetrics,'date')
+
+    return finalDataframe
