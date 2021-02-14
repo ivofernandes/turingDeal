@@ -6,7 +6,7 @@ from pathlib import Path
 from src.api import apiFinancialModelPrep, apiDataHub
 from src.api import apiYahooFinance
 from src.aux.strategy import strategyBuyAndHold
-from src.aux.utils import data, cache
+from src.aux.utils import cache
 
 
 def buyAndHold(ticker):
