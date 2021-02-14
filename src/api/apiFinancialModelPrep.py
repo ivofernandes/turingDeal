@@ -18,7 +18,11 @@ import numpy
 from src.aux.utils import config
 
 financialModelUrl = 'https://financialmodelingprep.com/api/v3/'
-apiKey = config.getConfig('FINANCIAL_MODEL_PREP_API_KEY','demo')
+apiKey = config.getConfig('FINANCIAL_MODEL_PREP_API_KEY', 'demo')
+
+# Flag to activate metrics that use moving averages and year over year
+# so this flag will add new information but will also reduce reduce the number of datapoints after a dropnan
+diferenceAndAverageMetrics = False
 
 # Get a basic income statement dataframe
 def getBasicDataframe(ticker, endpoint):
@@ -88,13 +92,14 @@ def getIncomeStatement(ticker):
     dataframe['admin_revenue'] = dataframe['generalAndAdministrativeExpenses'] / dataframe['revenue']
     dataframe['sales_revenue'] = dataframe['sellingAndMarketingExpenses'] / dataframe['revenue']
 
-    # Caculate revenue year over year, and it's last 4 quarters moving avering
-    dataframe['revenue_yoy'] = (dataframe['revenue'].pct_change(periods=4)) * 100
-    dataframe['revenue_yoy_avg4'] = dataframe['revenue_yoy'].rolling(window=4).mean()
+    if diferenceAndAverageMetrics:
+        # Caculate revenue year over year, and it's last 4 quarters moving avering
+        dataframe['revenue_yoy'] = (dataframe['revenue'].pct_change(periods=4)) * 100
+        dataframe['revenue_yoy_avg4'] = dataframe['revenue_yoy'].rolling(window=4).mean()
 
-    # Caculate net margin year over year, and it's last 4 quarters moving avering
-    dataframe['netMargin_yoy'] = (dataframe['netIncomeRatio'].pct_change(periods=4)) * 100
-    dataframe['netMargin_yoy_avg4'] = dataframe['netMargin_yoy'].rolling(window=4).mean()
+        # Caculate net margin year over year, and it's last 4 quarters moving avering
+        dataframe['netMargin_yoy'] = (dataframe['netIncomeRatio'].pct_change(periods=4)) * 100
+        dataframe['netMargin_yoy_avg4'] = dataframe['netMargin_yoy'].rolling(window=4).mean()
 
     dataframe = cleanQuarterData(dataframe, 'fillingDate')
 
@@ -104,7 +109,8 @@ def getIncomeStatement(ticker):
 def getBalanceSheet(ticker):
     dataframe = getBasicDataframe(ticker, 'balance-sheet-statement')
 
-    dataframe['equity_yoy'] = (dataframe['totalStockholdersEquity'].pct_change(periods=4)) * 100
+    if diferenceAndAverageMetrics:
+        dataframe['equity_yoy'] = (dataframe['totalStockholdersEquity'].pct_change(periods=4)) * 100
 
     dataframe = cleanQuarterData(dataframe, 'fillingDate')
 
