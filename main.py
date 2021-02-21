@@ -5,7 +5,7 @@ from pathlib import Path
 
 from src.api import apiFinancialModelPrep, apiDataHub
 from src.api import apiYahooFinance
-from src.aux.strategy import strategyBuyAndHold
+from src.aux.strategy import strategyBuyAndHold, fundamentalsAnalyser
 from src.aux.utils import cache
 
 
@@ -22,27 +22,38 @@ def buyAndHold(ticker):
 
     # Analyse buy and hold results
     buyAndHold = strategyBuyAndHold.buyAndHoldAnalysis(priceDataFrame)
-    priceDataFrame['Close'].plot()
+    #priceDataFrame['Close'].plot()
 
-    print(strategyBuyAndHold.buyAndHoldLog(buyAndHold))
+    print(ticker + ": " + strategyBuyAndHold.buyAndHoldLog(buyAndHold))
 
 def routine():
     data = apiDataHub.get('nasdaq-listings')
-
-    ticker = 'AAPL'
 
     for index in data.index:
         ticker = data['Symbol'][index]
         category = data['Market Category'][index]
 
+        # If don't have the daframe locally try to get it
+        if category == 'Q' and not cache.existsFile('fundamental', ticker):
+            try:
+                print(ticker)
+
+                fundamentalData = apiFinancialModelPrep.getFundamentals(ticker)
+
+                cache.saveDataframe(fundamentalData, 'fundamental', ticker)
+
+                time.sleep(5)
+            except:
+                pass
+
+
         if category == 'Q':
             print(ticker)
-            fundamentalData = apiFinancialModelPrep.getFundamentals(ticker)
+            fundamentalData = cache.loadDataframe('fundamental', ticker)
 
-            cache.saveDataframe(fundamentalData, 'fundamental', ticker)
+            if fundamentalData is not None:
+                fundamentalsAnalyser.printKeyMetrics(fundamentalData)
 
-            time.sleep(60*5)
-
-    #buyAndHold(ticker)
+                buyAndHold(ticker)
 
 routine()
