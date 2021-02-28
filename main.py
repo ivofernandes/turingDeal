@@ -8,7 +8,6 @@ from src.api import apiYahooFinance
 from src.aux.strategy import strategyBuyAndHold, fundamentalsAnalyser
 from src.aux.utils import cache
 
-
 def buyAndHold(ticker):
     # Strategy start date
     startyear = 1990
@@ -54,6 +53,6 @@ def routine():
             if fundamentalData is not None:
                 fundamentalsAnalyser.printKeyMetrics(fundamentalData)
 
-                buyAndHold(ticker)
+                #buyAndHold(ticker)
 
 routine()
