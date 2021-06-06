@@ -10,14 +10,14 @@ from src.aux.utils import cache
 
 def buyAndHold(ticker):
     # Strategy start date
-    startyear = 1990
+    startyear = 1920
     startmonth = 1
     startday = 1
     startDate = datetime.datetime(startyear, startmonth, startday)
     intervals = [3, 5, 8, 10, 12, 15, 30]
 
     # Get daily data from yahoo finance
-    priceDataFrame = apiYahooFinance.getDailyData(ticker, startDate, None, intervals, False)
+    priceDataFrame = apiYahooFinance.getDailyData(ticker, startDate, None, intervals, True)
 
     # Analyse buy and hold results
     buyAndHold = strategyBuyAndHold.buyAndHoldAnalysis(priceDataFrame)
@@ -26,14 +26,14 @@ def buyAndHold(ticker):
     print(ticker + ": " + strategyBuyAndHold.buyAndHoldLog(buyAndHold))
 
 def routine():
-    data = apiDataHub.get('nasdaq-listings')
+
+    data = apiDataHub.get(apiDataHub.SP500)
 
     for index in data.index:
         ticker = data['Symbol'][index]
-        category = data['Market Category'][index]
 
         # If don't have the daframe locally try to get it
-        if category == 'Q' and not cache.existsFile('fundamental', ticker):
+        if cache.existsFile('fundamental', ticker):
             try:
                 print(ticker)
 
@@ -46,13 +46,13 @@ def routine():
                 pass
 
 
-        if category == 'Q':
-            print(ticker)
-            fundamentalData = cache.loadDataframe('fundamental', ticker)
+        print(ticker)
+        fundamentalData = cache.loadDataframe('fundamental', ticker)
 
-            if fundamentalData is not None:
-                fundamentalsAnalyser.printKeyMetrics(fundamentalData)
+        if fundamentalData is not None:
+            fundamentalsAnalyser.printKeyMetrics(fundamentalData)
 
-                #buyAndHold(ticker)
+            #buyAndHold(ticker)
 
-routine()
+#routine()
+buyAndHold('^GSPC')

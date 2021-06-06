@@ -9,10 +9,7 @@
 ####################################################################################
 
 import math
-import os
 import urllib.request, json, pandas, numpy
-from pathlib import Path
-
 import numpy
 
 from src.aux.utils import config
@@ -26,7 +23,6 @@ diferenceAndAverageMetrics = False
 
 # Get a basic income statement dataframe
 def getBasicDataframe(ticker, endpoint):
-
     urlString = financialModelUrl + endpoint + '/' + ticker + '?period=quarter&apikey=' + apiKey
     with urllib.request.urlopen(urlString) as url:
         # Get the dataframe
@@ -161,9 +157,6 @@ def joinQuarterDataframes(firstDataframe, secondDataframe, keyToJoin):
                         pass # Best effort
 
     return firstDataframe
-
-
-
 
 def getFundamentals(ticker):
     incomeStatement = getIncomeStatement(ticker)
