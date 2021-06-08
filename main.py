@@ -17,7 +17,7 @@ def buyAndHold(ticker):
     intervals = [3, 5, 8, 10, 12, 15, 30]
 
     # Get daily data from yahoo finance
-    priceDataFrame = apiYahooFinance.getDailyData(ticker, startDate, None, intervals, True)
+    priceDataFrame = apiYahooFinance.getDailyData(ticker, startDate, intervals, True)
 
     # Analyse buy and hold results
     buyAndHold = strategyBuyAndHold.buyAndHoldAnalysis(priceDataFrame)
