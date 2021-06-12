@@ -5,13 +5,13 @@ import pandas as pd
 from pathlib import Path
 from os import path
 
-def getFilePath(folder, ticker):
+def getFilePath(folder, file):
     # Get the file path
     script_location = Path(__file__).absolute().parent
 
     cacheFolderLocation = '../../../cache/'
     folderLocation = cacheFolderLocation + folder + '/'
-    fileRelativeLocation = folderLocation + ticker + '.csv'
+    fileRelativeLocation = folderLocation + file
 
     file_location = script_location / fileRelativeLocation
     file_path = '/'.join(file_location.parts)
@@ -24,19 +24,18 @@ def getFilePath(folder, ticker):
 
 # Check if a file exists
 def existsFile(folder, ticker):
-    file_path = getFilePath(folder, ticker)
+    file_path = getFilePath(folder, ticker + '.csv')
     exists = path.exists(file_path)
     return exists
 
 # Save dataframe to a cache folder
 def saveDataframe(dataframe, folder, ticker):
-
-    file_path = getFilePath(folder, ticker)
+    file_path = getFilePath(folder, ticker + '.csv')
     dataframe.to_csv(file_path)
 
 # Load daframe from a cache folder
 def loadDataframe(folder, ticker):
-    file_path = getFilePath(folder, ticker)
+    file_path = getFilePath(folder, ticker + '.csv')
 
     exists = path.exists(file_path)
 
