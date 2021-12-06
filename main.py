@@ -5,7 +5,7 @@ from pathlib import Path
 
 from src.api import apiFinancialModelPrep, apiDataHub
 from src.api import apiYahooFinance
-from src.aux.strategy import strategyBuyAndHold, fundamentalsAnalyser
+from src.aux.strategy import strategyBuyAndHold, fundamentalsAnalyser, analyse_drawdowns
 from src.aux.utils import cache
 
 def buyAndHold(ticker):
@@ -18,6 +18,9 @@ def buyAndHold(ticker):
 
     # Get daily data from yahoo finance
     priceDataFrame = apiYahooFinance.getDailyData(ticker, startDate, intervals, True)
+
+    apiYahooFinance.calculateDrawdowns(priceDataFrame, 1, 4)
+    drawdowns = analyse_drawdowns.drawdowns(priceDataFrame, 'long', 1)
 
     # Analyse buy and hold results
     buyAndHold = strategyBuyAndHold.buyAndHoldAnalysis(priceDataFrame)

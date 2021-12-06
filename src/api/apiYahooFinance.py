@@ -69,7 +69,7 @@ def getDailyData(ticker,startDate, intervals,calculateIndicatorsFlag):
 
     if calculateIndicatorsFlag:
         calculateIndicators(df, intervals)
-
+    calculateDrawdowns
     df = df.dropna(axis=1) # Drop columns that just have null values
 
     if calculateIndicatorsFlag:
