@@ -34,6 +34,7 @@ def getBasicDataframe(ticker, endpoint):
 
         return dataframe
 
+
 # Get income statement with some calculated data
 def cleanQuarterData(dataframe, key):
     # Drop rows after lose notion of the filling index and put filling date as index
